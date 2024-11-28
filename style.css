@@ -1,0 +1,105 @@
+.vc-dtrk-modal-content {
+    padding-block: 20px;
+    height: 270px;
+    width: 700px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 25px;
+    color: white;
+}
+
+.vc-dtrk-modal-navbar {
+    display: flex;
+    flex-direction: column;
+    row-gap: 15px;
+    width: 200px;
+    height: 100%;
+}
+
+.vc-dtrk-modal-page {
+    width: 100%;
+    height: 100%;
+}
+
+.vc-dtrk-user-page {
+    display: flex;
+    flex-direction: column;
+    row-gap: 15px;
+    height: 100%;
+    overflow: auto;
+}
+
+.vc-dtrk-user-page-header {
+    display: flex;
+    column-gap: 10px;
+}
+
+.vc-dtrk-user-page-comments {
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+}
+
+.vc-dtrk-user-page-comment {
+    display: flex;
+    align-items: center;
+    column-gap: 10px;
+}
+
+.vc-dtrk-user-page-comment-content {
+    display: flex;
+    flex-direction: column;
+    row-gap: 3px;
+}
+
+.vc-dtrk-user-page-comment-content span {
+    max-width: 450px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.vc-dtrk-user-page-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 5px;
+}
+
+.vc-dtrk-user-page-voice {
+    display: flex;
+    flex-direction: column;
+    row-gap: 5px;
+}
+
+.vc-dtrk-user-page-voice-guild {
+    display: flex;
+    align-items: center;
+}
+
+.vc-dtrk-guilds-page {
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+    height: 100%;
+    overflow: auto;
+}
+
+.vc-dtrk-guild {
+    display: flex;
+    column-gap: 5px;
+}
+
+.vc-dtrk-guild-avatar {
+
+}
+
+.vc-dtrk-guild-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 3px;
+}
+
+.vc-dtrk-guild-name {
+
+}
