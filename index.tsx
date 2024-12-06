@@ -1,18 +1,19 @@
-import {NavContextMenuPatchCallback} from "@api/ContextMenu";
+import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import ErrorBoundary from "@components/ErrorBoundary";
-import {ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal} from "@utils/modal";
+import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
-import {Button, Menu, Text, useEffect, useMemo, useState, React, Avatar, IconUtils, UserUtils} from "@webpack/common";
-import type {Channel, User} from "discord-types/general";
+import { Button, Menu, Text, useEffect, useMemo, useState, React, Avatar, IconUtils, UserUtils } from "@webpack/common";
+import type { Channel, User } from "discord-types/general";
 import './style.css';
-import {cl} from "./utils";
+import { cl } from "./utils";
 import {
     DiscordTrackerAPI,
     DiscordTrackerVictimComments,
     DiscordTrackerVictimGuild,
-    DiscordTrackerVictimInfo
+    DiscordTrackerVictimInfo,
+    DiscordTrackerVictimComment, DiscordTrackerPossibleFriends
 } from "./api";
-import {findByPropsLazy} from "@webpack";
+import { findByPropsLazy } from "@webpack";
 
 interface UserContextProps {
     channel: Channel;
@@ -22,7 +23,7 @@ interface UserContextProps {
 
 type ModalPageProps = {
     user: User;
-}
+};
 
 const ChannelActions: {
     disconnect: () => void;
@@ -30,7 +31,7 @@ const ChannelActions: {
 } = findByPropsLazy("disconnect", "selectVoiceChannel");
 
 const UserPageComments = (props: ModalPageProps) => {
-    const {user} = props;
+    const { user } = props;
 
     const [comments, setComments] = useState<DiscordTrackerVictimComments['comments_list']>([]);
     const [data, setData] = useState<DiscordTrackerVictimComments | null | undefined>();
@@ -40,53 +41,61 @@ const UserPageComments = (props: ModalPageProps) => {
 
         setData(response);
         setComments(prev => [...prev, ...(response?.comments_list ?? [])]);
-    }
+    };
 
     useEffect(() => {
-        fetchData()
+        fetchData();
     }, []);
 
     if (data === null) {
         return (
             <div>couldn't fetch comments</div>
-        )
+        );
     }
 
     if (data === undefined) {
         return (
             <div>loading...</div>
-        )
+        );
     }
 
-    return (
-        <div className={cl('user-page-comments')}>
-            {comments.map((comment) => (
-                <div className={cl('user-page-comment')} key={comment.comment_id}>
+    const renderComments = (comments: DiscordTrackerVictimComment[], depth = 0) => {
+        return comments.map((comment) => (
+            <>
+                <div style={{ marginLeft: `${15 * depth}px` }} className={cl('user-page-comment')}
+                    key={comment.comment_id}>
                     <Avatar size={'SIZE_32'}
-                            src={comment.is_anonymous ? IconUtils.getDefaultAvatarURL(user.id) : IconUtils.getUserAvatarURL({
-                                id: comment.id,
-                                avatar: comment.avatar
-                            } as User)}/>
+                        src={comment.is_anonymous ? IconUtils.getDefaultAvatarURL(user.id) : IconUtils.getUserAvatarURL({
+                            id: comment.id,
+                            avatar: comment.avatar
+                        } as User)} />
                     <div className={cl('user-page-comment-content')}>
                         <a onClick={async () => openTrackerModal(await UserUtils.getUser(comment.id))}>{comment.name ?? 'Anon'}</a>
                         <span>{comment.content}</span>
                     </div>
                 </div>
-            ))}
+                {comment.replies && renderComments(comment.replies, depth + 1)}
+            </>
+        ));
+    };
+
+    return (
+        <div className={cl('user-page-comments')}>
+            {renderComments(comments)}
             {data.paginator.has_next && (
                 <Button onClick={() => fetchData(data?.paginator.next_page_number || 0)}>load more</Button>
             )}
         </div>
-    )
-}
+    );
+};
 
 const UserPage = (props: ModalPageProps) => {
-    const {user} = props;
+    const { user } = props;
 
     const [data, setData] = useState<undefined | null | DiscordTrackerVictimInfo>();
 
     useEffect(() => {
-        DiscordTrackerAPI.getUserInfo(user.id).then(setData)
+        DiscordTrackerAPI.getUserInfo(user.id).then(setData);
     }, []);
 
     if (data === null) {
@@ -94,7 +103,7 @@ const UserPage = (props: ModalPageProps) => {
             <div>
                 <Text>user not found</Text>
             </div>
-        )
+        );
     }
 
     if (data === undefined) {
@@ -102,17 +111,17 @@ const UserPage = (props: ModalPageProps) => {
             <div>
                 <Text>loading...</Text>
             </div>
-        )
+        );
     }
 
     const connectToVoiceChannel = () => {
-        ChannelActions.selectVoiceChannel(data!.in_voice!.channel.id)
-    }
+        ChannelActions.selectVoiceChannel(data!.in_voice!.channel.id);
+    };
 
     return (
         <div className={cl('user-page')}>
             <div className={cl('user-page-header')}>
-                <Avatar size={'SIZE_120'} src={user.getAvatarURL()}/>
+                <Avatar size={'SIZE_120'} src={user.getAvatarURL()} />
                 <div className={cl('user-page-info')}>
                     <span>Time in voice: {String(Math.floor(data.time_in_voice / 60 / 60) || 0)}h</span>
                     <span>Last time in voice: {String(data.last_date_in_voice)}</span>
@@ -126,7 +135,7 @@ const UserPage = (props: ModalPageProps) => {
                             <Avatar src={IconUtils.getGuildIconURL({
                                 id: data.in_voice.guild.id,
                                 icon: data.in_voice.guild.icon
-                            })} size={'SIZE_24'}/>
+                            })} size={'SIZE_24'} />
                             <span>{data.in_voice.guild.name}</span>
                         </div>
                         <Button onClick={connectToVoiceChannel}>{data.in_voice.channel.name}</Button>
@@ -135,14 +144,14 @@ const UserPage = (props: ModalPageProps) => {
             </div>
             <UserPageComments {...props} />
         </div>
-    )
-}
+    );
+};
 
-const GuildsPage = ({user}: ModalPageProps) => {
+const GuildsPage = ({ user }: ModalPageProps) => {
     const [data, setData] = useState<undefined | null | DiscordTrackerVictimGuild[]>();
 
     useEffect(() => {
-        DiscordTrackerAPI.getUserGuilds(user.id).then(setData)
+        DiscordTrackerAPI.getUserGuilds(user.id).then(setData);
     }, []);
 
     if (data === null) {
@@ -150,7 +159,7 @@ const GuildsPage = ({user}: ModalPageProps) => {
             <div>
                 <Text>not found</Text>
             </div>
-        )
+        );
     }
 
     if (data === undefined) {
@@ -158,7 +167,7 @@ const GuildsPage = ({user}: ModalPageProps) => {
             <div>
                 <Text>loading...</Text>
             </div>
-        )
+        );
     }
 
     return (
@@ -166,7 +175,7 @@ const GuildsPage = ({user}: ModalPageProps) => {
             {data.map(guild => (
                 <div className={cl('guild')}>
                     <div className={cl('guild-avatar')}>
-                        <Avatar src={IconUtils.getGuildIconURL({id: guild.id, icon: guild.icon})} size={'SIZE_48'}/>
+                        <Avatar src={IconUtils.getGuildIconURL({ id: guild.id, icon: guild.icon })} size={'SIZE_48'} />
                     </div>
                     <div className={cl('guild-info')}>
                         <span className={cl('guild-name')}>{guild.name}</span>
@@ -176,16 +185,69 @@ const GuildsPage = ({user}: ModalPageProps) => {
                 </div>
             ))}
         </div>
-    )
-}
+    );
+};
+
+const PossibleFriendsPage = (props: ModalPageProps) => {
+    const { user } = props;
+
+    const [possibleFriends, setPossibleFriends] = useState<DiscordTrackerPossibleFriends['possible_friends_list']>([]);
+    const [data, setData] = useState<DiscordTrackerPossibleFriends | null | undefined>();
+
+    const fetchData = async (page?: number) => {
+        const response = await DiscordTrackerAPI.getPossibleFriends(user.id, page);
+
+        setData(response);
+        setPossibleFriends(prev => [...prev, ...(response?.possible_friends_list ?? [])]);
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    if (data === null) {
+        return (
+            <div>couldn't fetch possible friends</div>
+        );
+    }
+
+    if (data === undefined) {
+        return (
+            <div>loading...</div>
+        );
+    }
+
+    return (
+        <div className={cl('possible-friends-page')}>
+            {possibleFriends.map((friend) => (
+                <div className={cl('possible-friend')}>
+                    <Avatar src={friend.friend_ava_url ? IconUtils.getUserAvatarURL({
+                        id: friend.friend_id,
+                        avatar: friend.friend_ava_url
+                    } as User) : IconUtils.getDefaultAvatarURL(user.id)} size={'SIZE_48'} />
+                    <div className={cl('possible-friend-info')}>
+                        <a onClick={async () => openTrackerModal(await UserUtils.getUser(friend.friend_id))}>{friend.friend_name ?? 'Anon'}</a>
+                        <span>
+                            <span>Together time - {String(Math.floor(friend.together_time / 60 / 60) || 0)}h</span>
+                        </span>
+                    </div>
+                </div>
+            ))}
+            {data.paginator.has_next && (
+                <Button onClick={() => fetchData(data?.paginator.next_page_number || 0)}>load more</Button>
+            )}
+        </div>
+    );
+};
 
 const Pages = {
     UserPage,
     GuildsPage,
-}
+    PossibleFriendsPage
+};
 
-const Modal = ({modalProps, modalKey, user}: { modalProps: any; modalKey: string, user: User; }) => {
-    const [currentPage, setCurrentPage] = useState<keyof typeof Pages>('UserPage')
+const Modal = ({ modalProps, modalKey, user }: { modalProps: any; modalKey: string, user: User; }) => {
+    const [currentPage, setCurrentPage] = useState<keyof typeof Pages>('UserPage');
 
     const Page = useMemo(() => Pages[currentPage], [currentPage]);
 
@@ -203,10 +265,10 @@ const Modal = ({modalProps, modalKey, user}: { modalProps: any; modalKey: string
                         <div className={cl('modal-navbar')}>
                             <Button onClick={() => setCurrentPage('UserPage')}>Profile</Button>
                             <Button onClick={() => setCurrentPage('GuildsPage')}>Servers</Button>
-                            <Button onClick={() => setCurrentPage('GuildsPage')}>Search by role</Button>
+                            <Button onClick={() => setCurrentPage('PossibleFriendsPage')}>Possible friends</Button>
                         </div>
                         <div className={cl('modal-page')}>
-                            <Page user={user}/>
+                            <Page user={user} />
                         </div>
                     </div>
                 </ModalContent>
@@ -218,7 +280,7 @@ const Modal = ({modalProps, modalKey, user}: { modalProps: any; modalKey: string
             </ModalRoot>
         </ErrorBoundary>
     );
-}
+};
 
 const openTrackerModal = (user: User) => {
     const modalKey = `vc-discord-tracker-${user.id}`;
@@ -229,10 +291,10 @@ const openTrackerModal = (user: User) => {
             modalProps={props}
             user={user}
         />
-    ), {modalKey: `vc-discord-tracker-${user.id}`});
+    ), { modalKey: `vc-discord-tracker-${user.id}` });
 };
 
-const UserContext: NavContextMenuPatchCallback = (children, {user}: UserContextProps) => {
+const UserContext: NavContextMenuPatchCallback = (children, { user }: UserContextProps) => {
     const label = 'Discord tracker';
 
     children.splice(-1, 0, (
@@ -254,5 +316,5 @@ export default definePlugin({
 
     contextMenus: {
         'user-context': UserContext
-    }
+    },
 });

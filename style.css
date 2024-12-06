@@ -103,3 +103,22 @@
 .vc-dtrk-guild-name {
 
 }
+
+.vc-dtrk-possible-friends-page {
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+    height: 100%;
+    overflow: auto;
+}
+
+.vc-dtrk-possible-friend {
+    display: flex;
+    column-gap: 5px;
+}
+
+.vc-dtrk-possible-friend-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 3px;
+}

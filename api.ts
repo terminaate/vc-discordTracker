@@ -48,7 +48,7 @@ export type DiscordTrackerVictimGuild = {
     voice_member_count: number;
 }
 
-type CommentsPaginator = {
+type Paginator = {
     has_other_pages: boolean;
     has_previous: boolean;
     previous_page_number: false | number;
@@ -58,7 +58,7 @@ type CommentsPaginator = {
     has_next: boolean;
 }
 
-type Comment = {
+export type DiscordTrackerVictimComment = {
     // id means userId
     id: null | string;
     comment_id: number;
@@ -68,13 +68,29 @@ type Comment = {
     name?: string;
     avatar: string;
     likes_count: number;
-    replies: Comment[];
+    replies: DiscordTrackerVictimComment[];
 }
 
 export type DiscordTrackerVictimComments = {
     item_count: number;
-    comments_list: Comment[];
-    paginator: CommentsPaginator;
+    comments_list: DiscordTrackerVictimComment[];
+    paginator: Paginator;
+}
+
+type DiscordTrackerPossibleFriend = {
+    id: number;
+    friend_id: string;
+    friend_name: string;
+    friend_ava_url: null | string;
+    together_time: number;
+    first_date: string;
+    last_date: string;
+}
+
+export type DiscordTrackerPossibleFriends = {
+    item_count: number;
+    possible_friends_list: DiscordTrackerPossibleFriend[];
+    paginator: Paginator;
 }
 
 export class DiscordTrackerAPI {
@@ -109,6 +125,22 @@ export class DiscordTrackerAPI {
 
     public static async getUserComments(userId: string, page?: number): Promise<DiscordTrackerVictimComments | null> {
         let requestUrl = `https://discord-tracker.com/tracker/get-comments/${userId}/`;
+
+        if (page !== undefined) {
+            requestUrl += `?page=${page}`
+        }
+
+        const response = await this.request(requestUrl)
+
+        if (!response.ok) {
+            return null;
+        }
+
+        return response.json()
+    }
+
+    public static async getPossibleFriends(userId: string, page?: number): Promise<DiscordTrackerPossibleFriends | null> {
+        let requestUrl = `https://discord-tracker.com/tracker/get-possible-friends/${userId}/`;
 
         if (page !== undefined) {
             requestUrl += `?page=${page}`
